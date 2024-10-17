@@ -29,8 +29,7 @@ A real-time, browser-based arcade game built using **Python**, **Flask**, **Sock
 
 2. Install the required dependencies:
  ```bash
-   git clone https://github.com/yourusername/infinite-obstacles-game.git
-   cd infinite-obstacles-game
+   pip install Flask Flask-SocketIO
 ```
 3. Run the Flask app:
 
