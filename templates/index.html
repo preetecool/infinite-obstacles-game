@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Runner Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <p>Score: <span id="score">0</span> | Ammo: <span id="ammo">5</span></p>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const ammoElement = document.getElementById('ammo');
+
+        const socket = io();
+
+        let gameState = {
+            player: { x: 375, y: 550, ammo: 5 },
+            obstacles: [],
+            projectiles: [],
+            score: 0
+        };
+
+        let gameOver = false;
+        let gameOverHandled = false;
+
+        function drawPlayer(x, y) {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(x, y, 50, 50);
+        }
+
+        function drawObstacle(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 50, 50);
+        }
+
+        function drawProjectile(x, y) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x, y, 10, 20);
+        }
+
+        function updateGame(newState) {
+            gameState = newState;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer(gameState.player.x, gameState.player.y);
+            gameState.obstacles.forEach(obs => drawObstacle(obs.x, obs.y, obs.color));
+            gameState.projectiles.forEach(proj => drawProjectile(proj.x, proj.y));
+            scoreElement.textContent = gameState.score;
+            ammoElement.textContent = gameState.player.ammo;
+        }
+
+        socket.on('update', updateGame);
+
+        socket.on('game_over', (data) => {
+            if (!gameOverHandled) {
+                gameOver = true;
+                gameOverHandled = true;
+                alert(`Game Over! Your score: ${data.score}`);
+                const playAgain = confirm("Do you want to play again?");
+                if (playAgain) {
+                    socket.emit('reset');
+                    gameOver = false;
+                    gameOverHandled = false;
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (gameOver) return;
+            
+            let direction = null;
+            switch (event.key) {
+                case 'ArrowUp':
+                case 'w':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    direction = 'right';
+                    break;
+                case ' ':
+                    socket.emit('shoot');
+                    return;
+            }
+            if (direction) {
+                socket.emit('move', direction);
+            }
+        });
+
+        function gameLoop() {
+            if (!gameOver) {
+                socket.emit('update');
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
