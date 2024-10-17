@@ -22,7 +22,7 @@ A real-time, browser-based arcade game built using **Python**, **Flask**, **Sock
 
 1. Clone the repository:
 
-   ```bash
+ ```bash
    git clone https://github.com/yourusername/infinite-obstacles-game.git
    cd infinite-obstacles-game
    ``` 
